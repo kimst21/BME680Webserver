@@ -6,8 +6,8 @@
 #include "ESPAsyncWebServer.h"
 
 // Replace with your network credentials
-const char* ssid = "U+NetE51C";
-const char* password = "DA9969P73#";
+const char* ssid = "";
+const char* password = "";
 
 Adafruit_BME680 bme; // I2C
 
