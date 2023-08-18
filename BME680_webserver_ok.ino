@@ -5,7 +5,7 @@
 #include <WiFi.h>
 #include "ESPAsyncWebServer.h"
 
-// Replace with your network credentials
+// 네트워크 자격 증명으로 대체
 const char* ssid = "";
 const char* password = "";
 
@@ -20,10 +20,10 @@ AsyncWebServer server(80);
 AsyncEventSource events("/events");
 
 unsigned long lastTime = 0;  
-unsigned long timerDelay = 30000;  // send readings timer
+unsigned long timerDelay = 30000;  // 판독 타이머 전송
 
 void getBME680Readings(){
-  // Tell BME680 to begin measurement.
+  // BME680에 측정을 시작하라고 말합니다.
   unsigned long endTime = bme.beginReading();
   if (endTime == 0) {
     Serial.println(F("Failed to begin reading :("));
@@ -41,7 +41,6 @@ void getBME680Readings(){
 
 String processor(const String& var){
   getBME680Readings();
-  //Serial.println(var);
   if(var == "TEMPERATURE"){
     return String(temperature);
   }
@@ -141,11 +140,9 @@ if (!!window.EventSource) {
 
 void setup() {
   Serial.begin(115200);
-
-  // Set the device as a Station and Soft Access Point simultaneously
-  WiFi.mode(WIFI_AP_STA);
-  
-  // Set device as a Wi-Fi Station
+  // 장치를 스테이션과 소프트 액세스 포인트로 동시에 설정합니다
+  WiFi.mode(WIFI_AP_STA);  
+  // 기기를 Wi-Fi 스테이션으로 설정합니다
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -154,31 +151,28 @@ void setup() {
   Serial.print("Station IP Address: ");
   Serial.println(WiFi.localIP());
   Serial.println();
-
-  // Init BME680 sensor
+  // Init BME680 센서
   if (!bme.begin()) {
     Serial.println(F("Could not find a valid BME680 sensor, check wiring!"));
     while (1);
   }
-  // Set up oversampling and filter initialization
+  // 오버샘플링 및 필터 초기화 초기화
   bme.setTemperatureOversampling(BME680_OS_8X);
   bme.setHumidityOversampling(BME680_OS_2X);
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
-
-  // Handle Web Server
+  //웹 서버 처리
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html, processor);
   });
-
-  // Handle Web Server Events
+  // 웹 서버 이벤트 처리
   events.onConnect([](AsyncEventSourceClient *client){
     if(client->lastId()){
       Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
     }
-    // send event with message "hello!", id current millis
-    // and set reconnect delay to 1 second
+    // "안녕하세요!"라는 메시지와 함께 이벤트를 보냅니다. ID는 현재 밀리입니다
+    // 그리고 재접속 지연을 1초로 설정합니다
     client->send("hello!", NULL, millis(), 10000);
   });
   server.addHandler(&events);
@@ -194,7 +188,7 @@ void loop() {
     Serial.printf("Gas Resistance = %.2f KOhm \n", gasResistance);
     Serial.println();
 
-    // Send Events to the Web Server with the Sensor Readings
+    // 센서 판독값을 사용하여 웹 서버로 이벤트 전송
     events.send("ping",NULL,millis());
     events.send(String(temperature).c_str(),"temperature",millis());
     events.send(String(humidity).c_str(),"humidity",millis());
